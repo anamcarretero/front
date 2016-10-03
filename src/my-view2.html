@@ -1,0 +1,613 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/google-map/google-map.html">
+<link rel="import" href="../bower_components/google-map-markerclusterer/google-map-markerclusterer.html">
+<script src="../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+<link rel="import" href="../bower_components/json-card/json-card.html">
+
+<dom-module id="my-view2">
+
+  <template>
+
+    <style>
+      :host {
+        display: block;
+        padding: 0;
+        background-image: url('../images/map.png');
+        background-size: contain;
+      }
+
+      .card {
+        box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
+        padding: 16px;
+        margin: 24px;
+        border-radius: 5px;
+        background-color: #fff;
+        color: #757575;
+      }
+
+      .circle {
+        display: inline-block;
+        height: 64px;
+        width: 64px;
+        border-radius: 50%;
+        background: #ddd;
+        line-height: 64px;
+        font-size: 30px;
+        color: #555;
+        text-align: center;
+      }
+
+      h1 {
+        font-size: 22px;
+        margin: 16px 0;
+        color: #212121;
+      }
+
+      google-map::shadow::shadow div#json-wrapper {
+        color: green !important;
+      }
+
+      div.jsoneditor {
+
+      }
+
+      google-map::shadow div.jsoneditor-field,
+      google-map::shadow div.jsoneditor-value,
+      google-map::shadow div.jsoneditor-readonly {
+        border: 1px solid transparent;
+        min-height: 16px;
+        min-width: 32px;
+        padding: 2px;
+        margin: 1px;
+        word-wrap: break-word;
+        float: left;
+      }
+
+      /* adjust margin of p elements inside editable divs, needed for Opera, IE */
+      google-map::shadow div.jsoneditor-field p,
+      google-map::shadow div.jsoneditor-value p {
+        margin: 0;
+      }
+
+      google-map::shadow div.jsoneditor-value {
+        word-break: break-word;
+      }
+
+      google-map::shadow div.jsoneditor-readonly {
+        min-width: 16px;
+        color: gray;
+      }
+
+      google-map::shadow div.jsoneditor-empty {
+        border-color: lightgray;
+        border-style: dashed;
+        border-radius: 2px;
+      }
+
+      google-map::shadow div.jsoneditor-field.jsoneditor-empty::after,
+      google-map::shadow div.jsoneditor-value.jsoneditor-empty::after {
+        pointer-events: none;
+        color: lightgray;
+        font-size: 8pt;
+      }
+
+      google-map::shadow div.jsoneditor-field.jsoneditor-empty::after {
+        content: "field";
+      }
+
+      google-map::shadow div.jsoneditor-value.jsoneditor-empty::after {
+        content: "value";
+      }
+
+      google-map::shadow div.jsoneditor-value.jsoneditor-url,
+      a.jsoneditor-value.jsoneditor-url {
+        color: green;
+        text-decoration: underline;
+      }
+
+      a.jsoneditor-value.jsoneditor-url {
+        display: inline-block;
+        padding: 2px;
+        margin: 2px;
+      }
+
+      a.jsoneditor-value.jsoneditor-url:hover,
+      a.jsoneditor-value.jsoneditor-url:focus {
+        color: #ee422e;
+      }
+
+      google-map::shadow div.jsoneditor td.jsoneditor-separator {
+        padding: 3px 0;
+        vertical-align: top;
+        color: gray;
+      }
+
+      google-map::shadow div.jsoneditor-field[contenteditable=true]:focus,
+      google-map::shadow div.jsoneditor-field[contenteditable=true]:hover,
+      google-map::shadow div.jsoneditor-value[contenteditable=true]:focus,
+      google-map::shadow div.jsoneditor-value[contenteditable=true]:hover,
+      google-map::shadow div.jsoneditor-field.jsoneditor-highlight,
+      google-map::shadow div.jsoneditor-value.jsoneditor-highlight {
+        background-color: #FFFFAB;
+        border: 1px solid yellow;
+        border-radius: 2px;
+      }
+
+      google-map::shadow div.jsoneditor-field.jsoneditor-highlight-active,
+      google-map::shadow div.jsoneditor-field.jsoneditor-highlight-active:focus,
+      google-map::shadow div.jsoneditor-field.jsoneditor-highlight-active:hover,
+      google-map::shadow div.jsoneditor-value.jsoneditor-highlight-active,
+      google-map::shadow div.jsoneditor-value.jsoneditor-highlight-active:focus,
+      google-map::shadow div.jsoneditor-value.jsoneditor-highlight-active:hover {
+        background-color: #ffee00;
+        border: 1px solid #ffc700;
+        border-radius: 2px;
+      }
+
+      google-map::shadow div.jsoneditor-value.jsoneditor-string {
+        color: #008000;
+      }
+
+      google-map::shadow div.jsoneditor-value.jsoneditor-object,
+      google-map::shadow div.jsoneditor-value.jsoneditor-array {
+        min-width: 16px;
+        color: #808080;
+      }
+
+      google-map::shadow div.jsoneditor-value.jsoneditor-number {
+        color: #ee422e;
+      }
+
+      google-map::shadow div.jsoneditor-value.jsoneditor-boolean {
+        color: #ff8c00;
+      }
+
+      google-map::shadow div.jsoneditor-value.jsoneditor-null {
+        color: #004ED0;
+      }
+
+      google-map::shadow div.jsoneditor-value.jsoneditor-invalid {
+        color: #000000;
+      }
+
+      google-map::shadow div.jsoneditor-tree button {
+        width: 24px;
+        height: 24px;
+        padding: 0;
+        margin: 0;
+        border: none;
+        cursor: pointer;
+        background: transparent url('img/jsoneditor-icons.svg');
+      }
+
+      google-map::shadow div.jsoneditor-mode-view tr.jsoneditor-expandable td.jsoneditor-tree,
+      google-map::shadow div.jsoneditor-mode-form tr.jsoneditor-expandable td.jsoneditor-tree {
+        cursor: pointer;
+      }
+
+      google-map::shadow div.jsoneditor-tree button.jsoneditor-collapsed {
+        background-position: 0 -48px;
+      }
+
+      google-map::shadow div.jsoneditor-tree button.jsoneditor-expanded {
+        background-position: 0 -72px;
+      }
+
+      google-map::shadow div.jsoneditor-tree button.jsoneditor-contextmenu {
+        background-position: -48px -72px;
+      }
+
+      google-map::shadow div.jsoneditor-tree button.jsoneditor-contextmenu:hover,
+      google-map::shadow div.jsoneditor-tree button.jsoneditor-contextmenu:focus,
+      google-map::shadow div.jsoneditor-tree button.jsoneditor-contextmenu.jsoneditor-selected,
+      tr.jsoneditor-selected.jsoneditor-first button.jsoneditor-contextmenu {
+        background-position: -48px -48px;
+      }
+
+      google-map::shadow div.jsoneditor-tree *:focus {
+        outline: none;
+      }
+
+      google-map::shadow div.jsoneditor-tree button:focus {
+        /* TODO: nice outline for buttons with focus
+        outline: #97B0F8 solid 2px;
+        box-shadow: 0 0 8px #97B0F8;
+        */
+        background-color: #f5f5f5;
+        outline: #e5e5e5 solid 1px;
+      }
+
+      google-map::shadow div.jsoneditor-tree button.jsoneditor-invisible {
+        visibility: hidden;
+        background: none;
+      }
+
+      google-map::shadow div.jsoneditor {
+        color: #1A1A1A;
+        -moz-box-sizing: border-box;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        position: relative;
+        padding: 0;
+        line-height: 100%;
+      }
+
+      google-map::shadow div.jsoneditor-tree table.jsoneditor-tree {
+        border-collapse: collapse;
+        border-spacing: 0;
+        width: 100%;
+        margin: 0;
+      }
+
+      google-map::shadow div.jsoneditor-outer {
+        width: 100%;
+        height: 100%;
+        margin: -35px 0 0 0;
+        padding: 35px 0 0 0;
+
+        -moz-box-sizing: border-box;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+      }
+
+      textarea.jsoneditor-text,
+      .ace-jsoneditor {
+        min-height: 150px;
+      }
+
+      google-map::shadow div.jsoneditor-tree {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        overflow: auto;
+      }
+
+      textarea.jsoneditor-text {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+
+        -moz-box-sizing: border-box;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+
+        outline-width: 0;
+        border: none;
+        background-color: white;
+        resize: none;
+      }
+
+      tr.jsoneditor-highlight,
+      tr.jsoneditor-selected {
+        background-color: #e6e6e6;
+      }
+
+      tr.jsoneditor-selected button.jsoneditor-dragarea,
+      tr.jsoneditor-selected button.jsoneditor-contextmenu {
+        visibility: hidden;
+      }
+
+      tr.jsoneditor-selected.jsoneditor-first button.jsoneditor-dragarea,
+      tr.jsoneditor-selected.jsoneditor-first button.jsoneditor-contextmenu {
+        visibility: visible;
+      }
+
+      google-map::shadow div.jsoneditor-tree button.jsoneditor-dragarea {
+        background: url('img/jsoneditor-icons.svg') -72px -72px;
+        cursor: move;
+      }
+
+      google-map::shadow div.jsoneditor-tree button.jsoneditor-dragarea:hover,
+      google-map::shadow div.jsoneditor-tree button.jsoneditor-dragarea:focus,
+      tr.jsoneditor-selected.jsoneditor-first button.jsoneditor-dragarea {
+        background-position: -72px -48px;
+      }
+
+      google-map::shadow div.jsoneditor tr,
+      google-map::shadow div.jsoneditor th,
+      google-map::shadow div.jsoneditor td {
+        padding: 0;
+        margin: 0;
+      }
+
+      google-map::shadow div.jsoneditor td {
+        vertical-align: top;
+      }
+
+      google-map::shadow div.jsoneditor td.jsoneditor-tree {
+        vertical-align: top;
+      }
+
+      google-map::shadow div.jsoneditor-field,
+      google-map::shadow div.jsoneditor-value,
+      google-map::shadow div.jsoneditor td, /*height: 780px;*/
+      google-map::shadow div.jsoneditor th,
+      google-map::shadow div.jsoneditor textarea,
+      .jsoneditor-schema-error {
+        font-family: droid sans mono, consolas, monospace, courier new, courier, sans-serif;
+        font-size: 10pt;
+        color: #1A1A1A;
+      }
+
+      /* popover */
+      google-map::shadow .jsoneditor-schema-error {
+        cursor: default;
+        display: inline-block;
+        /*font-family: arial, sans-serif;*/
+        height: 24px;
+        line-height: 24px;
+        position: relative;
+        text-align: center;
+        width: 24px;
+      }
+
+      google-map::shadow div.jsoneditor-tree .jsoneditor-schema-error {
+        width: 24px;
+        height: 24px;
+        padding: 0;
+        margin: 0 4px 0 0;
+        background: url('img/jsoneditor-icons.svg') -168px -48px;
+      }
+
+      google-map::shadow .jsoneditor-schema-error .jsoneditor-popover {
+        /*height: 780px;*/
+        background-color: #4c4c4c;
+        border-radius: 3px;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.4);
+        color: #fff;
+        display: none;
+        padding: 7px 10px;
+        position: absolute;
+        width: 200px;
+        z-index: 4;
+      }
+
+      google-map::shadow .jsoneditor-schema-error .jsoneditor-popover.jsoneditor-above {
+        bottom: 32px;
+        left: -98px;
+      }
+
+      google-map::shadow .jsoneditor-schema-error .jsoneditor-popover.jsoneditor-below {
+        top: 32px;
+        left: -98px;
+      }
+
+      google-map::shadow .jsoneditor-schema-error .jsoneditor-popover.jsoneditor-left {
+        top: -7px;
+        right: 32px;
+      }
+
+      google-map::shadow .jsoneditor-schema-error .jsoneditor-popover.jsoneditor-right {
+        top: -7px;
+        left: 32px;
+      }
+
+      google-map::shadow .jsoneditor-schema-error .jsoneditor-popover:before {
+        border-right: 7px solid transparent;
+        border-left: 7px solid transparent;
+        content: '';
+        display: block;
+        left: 50%;
+        margin-left: -7px;
+        position: absolute;
+      }
+
+      google-map::shadow .jsoneditor-schema-error .jsoneditor-popover.jsoneditor-above:before {
+        border-top: 7px solid #4c4c4c;
+        bottom: -7px;
+      }
+
+      google-map::shadow .jsoneditor-schema-error .jsoneditor-popover.jsoneditor-below:before {
+        border-bottom: 7px solid #4c4c4c;
+        top: -7px;
+      }
+
+      google-map::shadow .jsoneditor-schema-error .jsoneditor-popover.jsoneditor-left:before {
+        border-left: 7px solid #4c4c4c;
+        border-top: 7px solid transparent;
+        border-bottom: 7px solid transparent;
+        content: '';
+        top: 19px;
+        right: -14px;
+        left: inherit;
+        margin-left: inherit;
+        margin-top: -7px;
+        position: absolute;
+      }
+
+      google-map::shadow .jsoneditor-schema-error .jsoneditor-popover.jsoneditor-right:before {
+        border-right: 7px solid #4c4c4c;
+        border-top: 7px solid transparent;
+        border-bottom: 7px solid transparent;
+        content: '';
+        top: 19px;
+        left: -14px;
+        margin-left: inherit;
+        margin-top: -7px;
+        position: absolute;
+      }
+
+      google-map::shadow .jsoneditor-schema-error:hover .jsoneditor-popover,
+      google-map::shadow .jsoneditor-schema-error:focus .jsoneditor-popover {
+        display: block;
+        -webkit-animation: fade-in .3s linear 1, move-up .3s linear 1;
+        -moz-animation: fade-in .3s linear 1, move-up .3s linear 1;
+        -ms-animation: fade-in .3s linear 1, move-up .3s linear 1;
+      }
+
+      @-webkit-keyframes fade-in {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @-moz-keyframes fade-in {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @-ms-keyframes fade-in {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      google-map::shadow .jsoneditor .jsoneditor-text-errors {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #ffef8b;
+        border-top: 1px solid #ffd700;
+      }
+
+      google-map::shadow .jsoneditor .jsoneditor-text-errors td {
+        padding: 3px 6px;
+        vertical-align: middle;
+      }
+
+      google-map::shadow .jsoneditor-text-errors .jsoneditor-schema-error {
+        border: none;
+        width: 24px;
+        height: 24px;
+        padding: 0;
+        margin: 0 4px 0 0;
+        background: url('img/jsoneditor-icons.svg') -168px -48px;
+      }
+
+      paper-dialog {
+        padding-top: 0px;
+        padding-right: 48px;
+      }
+
+      paper-button.dialog-dismiss {
+        padding: 0 24px;
+        position: absolute;
+        top: 0;
+        right: 0;
+        margin: 0;
+      }
+
+
+    </style>
+
+    <div id="mapWrapper">
+      <google-map-markerclusterer map="{{map}}">
+        <my-custom-clustericon class="cluster-icon"></my-custom-clustericon>
+      </google-map-markerclusterer>
+      <google-map map="{{map}}" id="mymap" latitude="42.77493" longitude="3.41942" zoom="3" disable-zoom="false" fit-to-markers
+                  disable-default-ui api-key="AIzaSyByWmitWuxFuPGr1MpFFJrVKxkhVwZeWZk" click-events="false">
+        <google-map-marker latitude="37"
+                           longitude="-5"
+                           icon="../images/node5.png"
+                           draggable="false"
+                           title="Spain"
+                           click-events="true"
+                           id="spainMarker"
+                           z-index="-10"
+                           on-google-map-marker-click="_spainMarkerClicked">
+          <json-card id="spain" class="blue-theme" name="USASpain" json="[[spainJson]]"></json-card>
+
+        </google-map-marker>
+        <google-map-marker latitude="42" longitude="-75" icon="../images/node5.png"
+                           draggable="false" title="Nueva York"
+                           click-events="false"
+                           id="newYork  Marker"
+                           on-google-map-marker-click="_clicked">
+        </google-map-marker>
+        <google-map-marker latitude="-25" longitude="132" icon="../images/node5.png"
+                           draggable="false" title="Australia"></google-map-marker>
+        <google-map-marker latitude="51" longitude="0" icon="../images/node5.png"
+                           draggable="false" title="Londres"></google-map-marker>
+        <google-map-marker latitude="19" longitude="-99" icon="../images/node5.png"
+                           draggable="false" title="México"></google-map-marker>
+      </google-map>
+    </div>
+
+    <!--<json-card id="spain" class="blue-theme" name="USASpain" json="[[spainJson]]"></json-card>-->
+
+  </template>
+
+  <script>
+
+    Polymer({
+
+      is: 'my-view2',
+
+      properties: {
+        spainJson: {
+          type: Object,
+          value: [{
+            'ui.key1': 'This is the first one',
+            'ui.key2': true,
+            'ui.nullkey': null
+          }]
+        }
+      },
+
+      attached: function () {
+        this.$.mymap.styles = [{
+            "featureType": "all",
+            "elementType": "all",
+            "stylers": [{"invert_lightness": true}, {"saturation": 10}, {"lightness": 30}, {"gamma": 0.5}, {"hue": "#435158"}]
+          }, {
+            "featureType": "administrative",
+            "elementType": "all",
+            "stylers": [
+              {
+                "visibility": "off"
+              }
+            ]
+          }, {
+            "featureType": "landscape",
+            "elementType": "all",
+            "stylers": [{"color": "#405769"}]
+          }, {
+            "featureType": "water",
+            "elementType": "geometry.fill",
+            "stylers": [{
+              "color": "#232f3a"
+            }
+          ]
+        }];
+        this.$.mapWrapper.style.height = ((window.innerHeight) - 64) + 'px';
+
+      },
+
+      _clicked: function(event,detail, sender) {
+        this.$.dialog.positionTarget = event.target;
+        this.$.dialog.open();
+      },
+
+      _spainMarkerClicked: function (event, detail, sender) {
+        console.log('google_map_marker_click');
+
+      }
+    });
+
+  </script>
+
+</dom-module>
+

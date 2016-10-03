@@ -1,0 +1,159 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/waterfall-columns-grid/waterfall-columns-grid.html">
+<link rel="import" href="../bower_components/json-card/json-card.html">
+
+<dom-module id="my-view1">
+  <template>
+    <style>
+      :host {
+        display: block;
+        padding: 10px;
+        background-image: url(../images/map.png);
+        background-size: contain;
+        position: relative;
+      }
+
+      .background {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: #405769;
+        opacity: 0.6;
+      }
+
+      .container {
+        position: relative;
+        max-width: 1200px;
+        margin: 50px auto;
+      }
+      waterfall-grid {
+        margin: 4px;
+      }
+
+      :host ::content waterfall-columns-grid ::content paper-card {
+        margin-bottom: 20px;
+      }
+
+      json-card {
+        --json-card-button-color: #ffd539;
+      }
+
+      json-card.blue-theme {
+        --main-json-card-color: #00BCD4;
+      }
+
+      json-card.purple-theme {
+        --main-json-card-color: #9C27B0;
+      }
+
+      json-card.red-theme {
+        --main-json-card-color: #FF5252;
+      }
+
+      json-card.green-theme {
+        --main-json-card-color: #8BC34A;
+      }
+
+      json-card.orange-theme {
+        --main-json-card-color: #DD7F27;
+      }
+
+    </style>
+
+    <iron-ajax auto
+               url="https://www.googleapis.com/youtube/v3/search"
+               params='{"part":"snippet", "q":"polymer", "key": "AIzaSyAuecFZ9xJXbGDkQYWBmYrtzOGJD-iDIgI", "type": "video"}'
+               handle-as="json"
+               on-response="handleResponse"
+               last-response="{{ajaxResponse}}">
+    </iron-ajax>
+
+    <div class="background"></div>
+
+    <div class="container">
+
+      <waterfall-columns-grid id="grid" col-count="3" col-width="375px" col-gap="10px">
+        <!--<template id="items" is="dom-repeat" items="[[items]]">-->
+
+        <json-card id="usaWest" class="blue-theme" name="USAWest" json="[[newYorkJson]]"></json-card>
+
+        <json-card id="usaEast" class="purple-theme" name="USAEast" json="[[newYorkJson]]"></json-card>
+
+        <json-card id="eu" class="orange-theme" name="EU" json="[[newYorkJson]]"></json-card>
+
+        <json-card id="latam" class="red-theme" name="LATAM" json="[[newYorkJson]]"></json-card>
+
+        <json-card id="asia" class="green-theme" name="Asia" json="[[newYorkJson]]"></json-card>
+
+
+      </waterfall-columns-grid>
+    </div>
+
+
+  </template>
+
+  <script src="../../bower_components/webcomponentsjs/webcomponents.min.js"></script>
+  <script>
+    Polymer({
+      is: 'my-view1',
+      properties: {
+        newYorkJson: {
+          type: Object,
+          value: [{
+            'array': [1, 2, 3],
+            'boolean': true,
+            'null': null,
+            'number': 123,
+            'object': { 'a': 'b', 'c': 'd' },
+            'string': 'Hello World'
+          }]
+        },
+        ajaxResponse: Object
+      },
+      attached: function() {
+
+        this.setDataInitialState();
+        this.$.grid.reinit();
+      },
+
+      setDataInitialState: function() {
+        var jsonEditors = this.$.grid.querySelectorAll('juicy-jsoneditor');
+
+        for (var i = 0; i < jsonEditors.length; i++) {
+          jsonEditors[i].mode = "view";
+          jsonEditors[i].editor.expandAll();
+          this.$.grid.reinit();
+        }
+      },
+
+      toggle: function() {
+        console.log('toggle');
+        this.$.actions.toggle();
+      },
+
+      manageEditState: function(event) {
+        event.target.parentNode.parentNode.querySelector('juicy-jsoneditor').mode="tree";
+        event.target.parentNode.parentNode.querySelector('juicy-jsoneditor').editor.expandAll();
+        console.log('tab edit');
+      },
+
+      handleResponse: function() {
+        console.log('response from https://www.googleapis.com/youtube/v3/search');
+      }
+
+    });
+  </script>
+</dom-module>
